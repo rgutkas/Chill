@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html manifest="code/cache.mf">
+<head>
+    <link rel="stylesheet" type="text/css" href="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.css" />
+    <script src="code/javascript/third-party/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.js"></script>
+</head>
+<body>	
+	<div id="login"></div>
+	<div id="loginError"></div>
+</body>
+
+<script>
+var loginFields=[
+					{ name: 'user', type: 'text', required: true, html:{caption	: "Username"} },
+					{ name: 'pass', type: 'password', required: true, html:{caption	: "Password"} },
+				];
+if (courseId==-1){
+	loginFields=[{ name: 'Course', type:'list',options:{items:courseList}}].concat(loginFields);	
+}
+
+$(function () {
+ 	$('#login').w2form({ 
+		name     : 'login',
+		header   : courseName,	
+		url      : 'server/post',
+		fields: loginFields,
+		record: {
+			Course : {id:courseId}
+		},
+		actions: {
+			login: function () {
+				if (w2ui['login'].validate(true).length==0) {
+       				$.get("code/php/login.php","course="+w2ui['login'].record.Course.id+"&user="+w2ui['login'].record.user+"&pass="+w2ui['login'].record.pass,function (data) {
+       			 		if (data.slice(0,5)=="Error") {
+       			 			$("#loginError").html("<span style='color:red'>"+data+"<span>");	
+       			 		} else {
+      	 		 			document.write(data);
+     	  		 			document.close();
+						}
+    	    		
+    	    		});
+    	    	}
+			},
+	
+		}
+	
+	});
+});
+
+ 
+</script>
+</body>
+</html>

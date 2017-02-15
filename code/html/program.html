@@ -1,0 +1,87 @@
+<html style="width: 100%; min-height: 100%; height: 100%;">
+
+	<head>
+		<link rel="stylesheet" type="text/css" href="../javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.css" />
+   		<script src="../javascript/third-party/jquery-2.1.4.min.js"></script> 
+    	<script type="text/javascript" src="../javascript/third-party/ace/ace.js"></script>
+    	<script type="text/javascript" src="../javascript/third-party/jquery-ace.min.js"></script>
+    	<script type="text/javascript" src="../javascript/third-party/spin.min.js"></script>
+    	<script type="text/javascript" src="../javascript/editor.js"></script>
+	</head>
+
+	<body style="margin: 0px 0 0 0; padding: 0px; width: 100%; min-height: 100%; height: 100%;" onresize="resize('out','outContainer');" onload="resize('out','outContainer'); log.init('program');" onunload="parent.editor.store();" >
+		<table id="layout" style="width: 100%; min-width: 100%; min-height: 100%; height: 100%;">	
+			<tr>
+				<td style="min-width:70px;text-align:right;">
+					<table style="width:100%;height:100%;text-align:right;">
+						<tr><td style="width:100%;height:15px;text-align:right;">
+							<span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;">Source:</span>
+						</td></tr>
+						<tr><td style='width: 100%;'>
+							<button class="w2ui-btn" id="compileButton" style='width: 54px; height: 30px;' type="button" align="middle" onclick="compileButtonPress()"><span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;"><div id="compileButtonDiv">Run</div></span></button>
+						</td></tr>	
+						<tr><td style='width: 100%;'>
+							<button class="w2ui-btn" id="debugButton" style='width: 54px; height: 30px;' type="button" align="middle" onclick="debugButtonPress()"><span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;"><div id="debugButtonDiv">Step</div></span></button>
+						</td></tr>		
+					</table>
+				</td>	
+				<td>
+					<div style='width: 100%; min-height: 100%; height: 100%;border-width:1px;border-style:solid;' id='inputEditor'</div>
+				</td>
+							
+			</tr>	
+			<tr>
+				<td style="min-width:70px;height:70px;text-align:right;">
+					<table style="width:100%;height:100%;text-align:right;">
+						<tr><td style="width:100%;height:15px;text-align:right;">
+							<span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;">Variables:</span>
+						</td></tr>
+						<tr><td>
+							<div style="width:40px;height:40px;float:right;" id="spinner"></div>
+						</td></tr>
+					</table>	
+				</td>
+				<td style="height:70px;width:100%;" id="variablesContainer">	
+					<div id="out" style="height:100%; width:100%;border-width:1px;border-style:solid;overflow:auto;">	
+						<table id='variablesTable' align='top' border=0 style='width: 100%;text-align:top;'></table>
+					</div>
+				</td>
+			</tr>		
+			<tr>
+				<td style="min-width:70px;height:70px;text-align:right;">
+					<table style="width:100%;height:100%;text-align:right;">
+						<tr><td style="width:100%;height:15px;text-align:right;">
+							<span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;">Output:</span>
+						</td></tr>
+						<tr><td>
+						<!--	<div style="width:40px;height:40px;float:right;" id="spinner"></div>-->
+		</td></tr>
+					</table>	
+				</td>
+				<td style="height:70px;width:100%;" id="outContainer">	
+					<div id="out" style="height:100%; width:100%;border-width:1px;border-style:solid;overflow:auto;">	
+						<table id='outputTable' align='top' border=0 style='width: 100%;text-align:top;'></table>
+					</div>
+				</td>
+			</tr>		
+			<tr height="20px">
+				<td style="min-width:70px;text-align:right;">
+					<span style="font-size: 11px; font-family: Verdana, Arial, sans-serif;">Speed:</span>
+				</td>
+				<td>
+					<input type="range"  min="5" max="100" value="100" step="5" onchange="showValue(this.value)" width="100%"></input>
+					<span id="speed" style="font-size: 11px; font-family: Verdana, Arial, sans-serif;">100%</span>
+				</td>
+			</tr>
+		</table>	
+
+		<script type="text/javascript">
+				function showValue(v){
+					document.getElementById("speed").innerHTML=v+"%";
+					parent.editor.speed(v);
+				}
+		
+				parent.editor=getEditor(parent.courseName+parent.userName+"Exercise_"+parent.getSelection('exercises'),true);
+		</script>	
+	</body>
+</html>

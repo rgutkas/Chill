@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html style="width: 100%; min-height: 100%; height: 100%;" manifest="code/cache.mf">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.css" />
+    <script src="code/javascript/third-party/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/ace/ace.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/jquery-ace.min.js"></script>
+    <script type="text/javascript" src="code/javascript/ui.js"></script>
+    <script type="text/javascript" src="code/javascript/templates.js"></script>
+
+    <style>
+    	input[type="text"] {
+  			width: 100%;
+		}
+		
+		input[type="password"] {
+  			width: 100%;
+		}
+		
+		textarea {
+			width: 100%;
+			height:100%;
+			resize:none;
+		}
+		
+    </style>
+
+</head>
+
+<body style="margin: 0px 0 0 0; padding: 0px; width: 100%; min-height: 100%; height: 100%;">
+
+<div id="layout" style="width: 100%; min-height: 100%; height: 100%;"></div>
+
+<script type="text/javascript">
+function id2Url(id) {
+	return $(location).attr('href')+"?id="+id;
+}
+
+// Handlers for user form templates
+var users,teachers,students;
+
+var courseId;
+
+/*
+ * User Interface
+ */
+$(function () {
+    var pstyle = 'border: 0px solid #dfdfdf; padding: 5px;';
+        
+    // Main Layout with Top Control Panel
+    $('#layout').w2layout({
+        name: 'layout',
+        panels: [
+            { type: 'main', size: 50, style: pstyle,
+              toolbar: {items : [
+    						{ 	type	: 	'html',  
+        			  		  	id		: 	'adminMode',
+								html	: 	'<div style="padding: 3px 10px;">'+
+				  							'<b>Admin :</b>'+
+											'</div>' 
+				  			},
+							{	type	:	'radio', id	: 'courseButton', caption :'Courses', group	: 	'1',
+				  				checked : 	true,
+				  				onClick	:   function () {
+				  					sendCommand("list","course",{},function (data) {
+										refillSidebar('courseList',data);
+										w2ui['courses'].content('main', "");
+										w2ui["courses"].get("left").toolbar.disable("delete");
+										w2ui['layout'].content('main', w2ui['courses']);
+										
+									});
+				  				}
+				  				
+							},
+							{   type	:	'radio', id	: 'userButton', group	:	'1', caption : 'Users',
+				  				onClick	:   function () {
+				  					sendCommand("list","user",{},function (data) {
+				  						userList=data;
+				  						refillSidebar('userList',userList);
+				  						w2ui['users'].content('main', "");
+				  						w2ui["users"].get("left").toolbar.disable("delete");
+				  						w2ui['layout'].content('main', w2ui['users']);	
+									});
+				  				}
+				  			},				 							  			
+				  			
+				  			{	type	: 	'spacer'},	
+				  			{	type	:	'break',	},
+				  			
+				  			{	type	:   'button', id : 'logoutButton', caption : 'Logout',
+				  				onClick : function () {
+				  					window.location=window.location;
+				  				}
+				  			}
+    					]}
+    	},
+    		{ type: 'bottom', size: 50, style: pstyle, content:"<div id='communicationError'></div>"}
+        ]
+    });
+    
+    // User Form
+    users=new userFormTemplate("User","users","left","main");
+    
+    // Users Workspace
+    $().w2layout({
+        name: 'users',
+        panels: [        
+            { type: 'left', style: pstyle,size:300, content: 'users',toolbar:users.toolbarTemplate()},
+            { type: 'main', style: pstyle}
+        ]
+    });
+   
+   
+    // Course Workspace
+    $().w2layout({
+        name: 'courses',
+        panels: [        
+            { type: 'left', style: pstyle,size:300, content: 'courses',
+              toolbar: toolbarTemplate("Courses",
+              	function /* + */() {
+              		sendCommand("add","course",{},function (data) {
+					  	w2ui['courseList'].add({id:data.id,text:'Unknown'});
+					  	w2ui['courseList'].select(data.id);
+					  	w2ui['courseDescription'].record.URL=id2Url(data.id);
+					  	w2ui['courseDescription'].record.Id=data.id;					
+					  	w2ui['courseDescription'].record.Name="";
+					  	w2ui['courseDescription'].record.Description="";
+					  	refillSidebar('studentList',[]);
+					  	refillSidebar('teacherList',[]);
+					  	w2ui['courses'].content('main', w2ui['courseInformation']);
+					});
+              	},
+              	function /* - */ () {
+         			var sel=getSelection('courseList');
+              		sendCommand("del","course",{"id":sel},function (data) {
+				  		w2ui['courseList'].remove(sel);
+				  		w2ui['courses'].content('main', "");
+					});
+              	})
+            }
+        ]
+    });
+    
+    // Courses   	
+   	$().w2sidebar({
+    	 name: 'courseList',
+    	 icon : 'fa-star',
+    	 onClick: function(target,event) {
+    	 	event.onComplete=function() {
+    	 		courseId=getSelection('courseList');
+    	 		sendCommand("get","course",{"id":Number(target)},function (data) {
+					
+					refillSidebar('studentList',data.students);
+					refillSidebar('teacherList',data.teachers);
+					  							
+					w2ui['courseDescription'].record.Id=Number(data.id);					
+				  	w2ui['courseDescription'].record.URL=id2Url(data.id);
+				  	w2ui['courseDescription'].record.Name=data.name;
+				  	w2ui['courseDescription'].record.Description=data.description;
+				  	
+				  	w2ui["courseInformation"].get("bottom").toolbar.disable("edit","delete"); 	
+				  	w2ui["courseInformation"].get("right").toolbar.disable("edit","delete"); 	
+
+					w2ui["courses"].get("left").toolbar.enable("delete");
+
+				  	w2ui['courses'].content('main', w2ui['courseInformation']);
+				});
+		 	};
+		 }
+    });
+    
+    sendCommand("list","course",{},function (data) {
+		refillSidebar('courseList',data);
+	});
+    
+    
+    // Course Information
+    
+    // Students 
+	students=new userFormTemplate("Student","courseInformation","right");
+   	// Teachers
+   	teachers=new userFormTemplate("Teacher","courseInformation","bottom");
+  	// Layout
+    $().w2layout({
+   		name: 'courseInformation',
+    	panels: [
+            {	type: 'main',  style:pstyle,  content:'Course Information'},
+            { 	type: 'right', size: 300, style: pstyle, content: 'students', toolbar : students.toolbarTemplate()},
+            {	type: 'bottom',style: pstyle, content:'Teacher',toolbar : teachers.toolbarTemplate()},
+         ]       
+   	});
+   	
+    $().w2form ({
+    	name : 'courseDescription',
+    	header : 'Course Information', 
+    	formHTML:   
+    				'<table border=0 style="width: 100%;height: 100%;" ><tr style="height:40px;">'+
+    				'<td align="right" style="width:400px;">Name&nbsp;</td>'+
+    				'<td style="width: 100%;"><div class="w2ui-field w2ui-span4"><input name="Name" type="text" style="width: 100%;"></div></td>'+
+    				'</tr><tr style="height:40px;">'+
+    				'<td align="right">Link&nbsp;</td>'+
+            		'<td><div class="w2ui-field w2ui-span4"><input name="URL" type="text" style="width: 100%;" disabled></div></td>'+
+            		'</tr><tr>'+
+            		'<td align="right">Description&nbsp;</td>'+
+					'<td style="width: 100%;height: 100%;"><textarea name="Description" palceholder="Enter the course description here!" style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table>',
+    	fields : [
+    		{ name: 'Name', type: 'text'},
+    		{ name: 'URL', type: 'text'},
+    		{ name: 'Description', type: 'textarea'}
+    	],
+    	record : {
+    		Id:-1,
+    		URL:""
+    	},
+    	onChange: function (event) {
+    		event.onComplete=function() {
+    			var record=w2ui['courseDescription'].record;
+    			var name=record.Name;
+    			if (name=="") name="Unknown";
+    			sendCommand("update","course",{"id":record.Id,"name":name,"description":record.Description},function (data) {
+       				w2ui['courseList'].set(record.Id, {"text":name});
+       				w2ui['courseList'].refresh();      				
+       			});
+       		}
+    	}
+    }); 
+   
+          	  
+    // Embedding Layouts
+    w2ui['layout'].content('main', w2ui['courses']);
+    
+    // Courses
+    w2ui['courses'].content('left', w2ui['courseList']);
+    w2ui["courses"].get("left").toolbar.disable("delete");
+  	w2ui['courses'].content('main', "");
+    
+	// Course Information
+	
+	w2ui['courseInformation'].content('main', w2ui['courseDescription']);
+	w2ui['courseInformation'].content('right', w2ui['studentList']);
+	w2ui['courseInformation'].content('bottom', w2ui['teacherList']);
+
+   // Users
+    w2ui['users'].content('left',w2ui['userList']);
+    w2ui['users'].content('main',"");
+     
+});
+
+
+</script>
+
+</body>
+</html>

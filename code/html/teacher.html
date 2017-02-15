@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html style="width: 100%; min-height: 100%; height: 100%;overflow:hidden;" manifest="code/cache.mf">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.css" />
+    <script src="code/javascript/third-party/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.js"></script>
+    <script type="text/javascript" src="code/javascript/ui.js"></script>
+    <script type="text/javascript" src="code/javascript/mode.js"></script>
+    <script type="text/javascript" src="code/javascript/templates.js"></script>
+</head>
+
+<body style="margin: 0px 0 0 0; padding: 0px; width: 100%; min-height: 100%; height: 100%;overflow:hidden;">
+
+<div id="layout" style="width: 100%; min-height: 100%; min-height:100%; height: 100%;"></div>
+
+<script type="text/javascript">
+var exerciseInfo;
+
+var students;
+var code="";
+var review=false;
+var mode;
+/*
+ * User Interface
+ */
+$(function () {
+    var pstyle = 'border: 0px solid #dfdfdf; padding: 5px;';    
+ 
+    // Main Layout with Top Control Panel
+    $('#layout').w2layout({
+        name: 'layout',
+        panels: [
+            { type: 'top', size: 83, style: pstyle,resizeable:true,
+              toolbar: {items : [
+              			/*	{   type	:	'button', id	: 'maximize',  caption : '&nwArr;',
+				  				onClick	:   function () {
+				  					fullScreen();
+				  					var button=w2ui['layout'].get('top').toolbar.items[0]; 
+				  					if (button.caption=="&nwArr;") button.caption='&seArr;';
+				  					else button.caption='&nwArr;'
+				  					w2ui['layout'].get('top').toolbar.refresh();
+				  				}
+				  			},*/
+    						{ 	type	: 	'html',  
+        			  		  	id		: 	'teacherMode',
+								html	: 	'<div style="padding: 3px 10px;">'+
+											'<b>'+courseName+' - '+
+				  							'Teacher : </b>'+
+				  							userName+
+											'</div>' 
+				  			},
+				 							  			
+				  			{	type	:	'radio', id	: 'editButton', caption :'Edit', group	: 	'1',
+				  				checked : 	true,
+				  				onClick	:   function () {
+				  					review=false;
+				  					w2ui['layout'].content('main', w2ui['edit']);	
+				  				}
+				  				
+				  			},
+				  			{   type	:	'radio', id	: 'reviewButton', group	:	'1', caption : 'Review',
+				  				onClick	:   function () {
+				  					// Store the editor content of edit mode
+    	 	 						if (editor) editor.store();
+				  					review=true;
+				  					w2ui['layout'].content('main', w2ui['review']);		
+				  				}
+				  			},
+				  			{	type	: 	'spacer'},
+				  				
+				  			{	type	:	'break',	},
+				  			
+				  			{	type	:   'button', id : 'logoutButton', caption : 'Logout',
+				  				onClick : function () {
+				  					window.location=window.location;
+				  				}
+				  			},
+    					]},
+    			content:'<textarea id="courseDescription" style="width: 100%; min-height: 100%; height: 100%;resize:none;" disabled>'+courseDescription+'</textarea>'
+    		},
+    		{ type: 'main', style: pstyle, content:"main screen"},
+    		{ type: 'bottom', size: 50, style: pstyle, content:"<small><div id='communicationError'></div></small>"}
+
+        ]
+    });
+    
+    // Edit Mode
+    $().w2layout({
+        name: 'edit',
+        panels: [
+            { type: 'left', size: 250, style: pstyle, content: 'exercises' },
+            { type: 'main', style: pstyle, content:'input' },
+            { type: 'right', size: 250, style: pstyle, content: 'language' },
+        ]
+    });
+    
+    // Review Mode
+    $().w2layout({
+        name: 'review',
+        panels: [
+            { type: 'left', size: 250, style: pstyle, content: 'exercises' },
+            { type: 'main', style: pstyle, content:'input' },
+            { type: 'right', size: 250, style: pstyle, content: 'students' },
+        ]
+    });
+    
+    // Edit Mode Input
+    $().w2layout({
+        name: 'editInput',
+        panels: [
+            { type: 'top', size: 120, resizable: true, style: pstyle, 
+              content:'<textarea id="exerciseDescription" placeholder="Enter the exercise description" style="width: 100%; min-height: 100%; height: 100%;resize:none;"></textarea>' },
+            { type: 'main', style: pstyle, content:'input' },
+        ]
+    });
+    
+    $().w2form({
+    	name: 'editForm',
+    	formHTML:   
+    				'<table border=0 style="width: 100%;height: 100%;" ><tr style="height:40px;">'+
+    				'<td align="right" style="width:400px;">Name:</td>'+
+    				'<td style="width: 100%;"><input name="exerciseName" type="text" style="width: 100%;"></td>'+
+    				'</tr><tr style="height:40px;"><td>'+
+    				'<table style="width:100%;height:100%;text-align:right;">'+
+					'<tr><td style="width:100%;height:25px;text-align:right;">'+
+            		'Description:</td>'+
+            		'</tr></td><tr><td></tr></td></table>'+
+					'<td style="width: 100%;height: 100%;"><textarea name="exerciseDescription" palceholder="Enter the exercise description here!" style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table>',
+    	fields : [
+    		{ name: 'exerciseName', type: 'text',html:{}},
+    		{ name: 'exerciseDescription', type: 'textarea',html:{}}
+    	],
+    	record : {
+    		Id:-1
+    	},
+    	onChange: function (event) {
+    		event.onComplete=function() {
+    			var record=w2ui['editForm'].record;
+    			var name=record.exerciseName;
+    			if (name=="") name="Unknown";
+    			sendCommand("update","exercise",{"id":getSelection("exercises"),"name":name,"description":record.exerciseDescription},function (data) {
+       				w2ui['exercises'].set(record.Id, {"text":name});
+       				w2ui['exercises'].refresh();
+       			});
+       		}
+    	}
+    });
+    
+    $().w2form({
+    	name: 'reviewForm',
+    	formHTML:   
+    				'<table border=0 style="width: 100%;height: 100%;" ><tr style="height:40px;">'+
+    				'<td align="right" style="width:400px;"></td>'+
+    				'<td style="width: 100%;"><div class="w2ui-field w2ui-span4"><input name="exerciseName" disabled type="text" style="width: 100%;"></div></td>'+
+    				'</tr><tr style="height:40px;">'+
+            		'<td align="right"></td>'+
+					'<td style="width: 100%;height: 100%;"><textarea name="exerciseDescription" disabled style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table>',
+    	fields : [
+    		{ name: 'exerciseName', type: 'text',html:{}},
+    		{ name: 'exerciseDescription', type: 'textarea',html:{}}
+    	],   
+   	});
+   	
+   	$().w2form({
+   		name: 'ratingForm',
+    	formHTML:   '<table border=0 style="width: 100%;height: 100%;text-align:right;"><tr><td align="right" style="width:100%;">'+
+      				'<table border=0 style="width: 100%;height: 100%;text-align:right;"><tr>'+
+					'<td style="width: 40px;height: 100%;">Feedback:</td><td><textarea name="feedback" style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table></td><td style="width: 100%;height: 100%;">'+
+					'<table border=0 style="width: 20px;height: 100%;">'+
+    				'<tr><td><input name="grade" type="radio" value="1" >1</input></td></tr>'+
+    				'<tr><td><input name="grade" type="radio" value="2">2</input></td></tr>'+
+    				'<tr><td><input name="grade" type="radio" value="3" checked>3</input></td></tr>'+    				
+    				'<tr><td><input name="grade" type="radio" value="4">4</input></td></tr>'+
+      				'<tr><td><input name="grade" type="radio" value="5">5</input></td></tr>'+
+      				'</table></td><td style="width: 40px;height: 100%;">'+
+					'<input name="rate" type="button" value="Rate"></input>'+
+					'</td></tr></table>',
+    	fields : [
+    		{ name: 'feedback', type: 'textarea'},
+    		{ name: 'grade', type: 'radio',options:{items: [1,2,3,4,5]}},
+    		{ name:  'rate', type:'button'}
+    	],  
+    	actions : {
+   				rate:function () {
+   					sendCommand("rate","exercise",{"exercise":getSelection("exercises"),"user":getSelection("studentList"),"feeback":w2ui['ratingForm'].record.feedback,"grade":Number(w2ui['ratingForm'].record.grade)},function (data) {
+       					lockRated(data.time);
+       				});
+   				},
+   			}, 
+   		record : {
+   			feedback:"",
+   			grade:3
+   		}
+   	});
+   	
+    $().w2field({name:'exerciseName',box:$('#exerciseName')});
+    
+     // Review Mode Input
+    $().w2layout({
+        name: 'reviewInput',
+        panels: [
+            { type: 'top', size: 120, resizable: true, style: pstyle, content: '<textarea id="exerciseDescription" disabled style="width: 100%; min-height: 100%; height: 100%;resize:none;"></textarea>'},
+            { type: 'main', style: pstyle, content:'Please select an exercise and a student to review' },
+            { type:	'bottom', style:pstyle,size: 120,content:'rate'}
+        ]
+    });
+    
+    //Exercises With Add Button
+    $().w2layout({
+    	name: 'exerciseEdit', style: pstyle, resizeable:false,
+    	panels: [
+            { 	type: 'main', style: pstyle, content:'input',
+             	toolbar: toolbarTemplate("Exercise",
+             	function /* + */() {
+ 				  	sendCommand("add","exercise",{"course":courseId,"features":JSON.stringify(w2ui['language'].record),"mode":"instruction"},function (data) {
+				  		w2ui['exercises'].add({'id':data.id,'text':'Unknown'});
+				  		w2ui['exercises'].select(data.id);
+				  		w2ui["exerciseEdit"].get("main").toolbar.enable('edit','delete');
+				  		setMode("instruction");
+						refillSidebar('items',[]);
+
+				  		w2ui['editForm'].record.Id=data.id;
+
+				  		w2ui['editForm'].record.exerciseName="Unknown";
+				  		w2ui['editForm'].record.exerciseDescription="";
+				  		w2ui['reviewForm'].record.exerciseName="";
+				  		w2ui['reviewForm'].record.exerciseDescription="";
+				  		w2ui['edit'].content('main', w2ui['editInput']);
+    					w2ui['edit'].content('right', w2ui['languageNitems']);
+    					w2ui['review'].content('main', w2ui['reviewInput']);
+    					w2ui['review'].content('right', w2ui['students']);
+    					
+             		});
+             	},
+             	function /* - */() {
+             			var sel=getSelection('exercises');
+             			sendCommand("del","exercise",{"id":sel},function (data) {
+				  			w2ui['exercises'].remove(sel);
+				  			w2ui["exerciseEdit"].get("main").toolbar.disable('edit','delete');
+				  			w2ui['edit'].content('main', "");
+				  			w2ui['edit'].content('right', "");
+						});
+             	}),
+            }
+    	]
+    }); 
+            
+    //Exercises Without Add Button
+    $().w2layout({
+    	name: 'exerciseReview',
+    	panels: [
+            { 	type: 'main', style: pstyle, content:'input',toolbar: toolbarTemplate("Exercise")}
+        ]
+    });
+    
+    $().w2sidebar({
+    	 name: 'exercises',
+    	 onClick: function(target,event) {
+    	 	     	 	
+    	 	 sendCommand("get","exercise",{"id":Number(target)},function (data) {
+				//data.features=data.features;
+
+				setMode(data.mode);
+ 					
+				refillSidebar('items',data.items);
+	
+				w2ui['editForm'].record.Id=Number(data.id);						
+				w2ui['editForm'].record.exerciseName=w2ui['reviewForm'].record.exerciseName=data.name;					
+				w2ui['editForm'].record.exerciseDescription=w2ui['reviewForm'].record.exerciseDescription=data.description;		
+				  	  	
+				w2ui['language'].record=data.features;
+				w2ui['edit'].content('main', w2ui['editInput']);
+    			w2ui['edit'].content('right', w2ui['languageNitems']);
+    			
+    			w2ui['review'].content('main', w2ui['reviewInput']);
+    			w2ui['review'].content('right', w2ui['students']);
+    			    			
+    			featureCheck();	
+				w2ui["exerciseEdit"].get("main").toolbar.enable("delete");
+				w2ui["languageNitems"].get("main").toolbar.disable("edit","delete");
+				
+				    			getEmittedExercise();
+
+			});
+		}	
+    });
+    
+    // Language Features & Functions
+    $().w2layout({
+   		name: 'languageNitems',
+    	panels: [
+            { 	type: 'top', style: pstyle, size : 282,
+            	toolbar : {
+	            	items : [
+    							{ 	type	: 	'html',  
+									html	: 	'<div style="padding: 3px 10px;">'+
+					  							'<b>Mode </b>'+
+												'</div>' 
+					  			}, 
+					 			
+					 			{	type	:	'spacer',	},
+					  			
+					  			{	type	:	'radio', id	: 'instruction', caption :'Instruction', group: '2', checked:true,
+					  				onClick	:   function () {
+					  					editor.reset();
+					  					sendCommand("update","exercise",{"id":getSelection("exercises"),"mode":"instruction"},function (data) {
+					  						setMode("instruction");	
+										});				  								  										  				
+					  				}
+				  				
+					  			},
+					  			{	type	:	'radio', id	: 'program', caption :'Program', group: '2',
+					  				onClick	:   function () {
+					  					editor.reset();
+					  					sendCommand("update","exercise",{"id":getSelection("exercises"),"mode":"program"},function (data) {
+					  						setMode("program");
+					  					});
+
+					  				}
+					  			},
+				  			
+					 	]
+				}
+			},
+            {	type: 'main', style: pstyle, content:'Predefined Items',
+            	toolbar: toolbarTemplate("Predefined Items",
+          			function /* + */ () {
+          				sendCommand("list","item",{"course":courseId,"exercise":getSelection('exercises')},function (data) {
+							w2ui['AddItemDialog'].fields[0].options.items=[{id:-1,text:"New"}].concat(data);
+							w2ui['AddItemDialog'].record.Name=undefined;
+							w2ui['AddItemDialog'].record.Helptext=undefined;
+							w2ui['AddItemDialog'].record.Public=false;
+							editor.set("");
+
+							openDialog("AddItemDialog",$( document ).width()-10,$( document ).height()-10);
+						});
+          			},
+          			function /*-*/ () {
+          				var sel=getSelection("items");
+          				sendCommand("del","itemInExercise",{"id":0,"item":sel,"exercise":getSelection('exercises')}, function (data){
+          					w2ui['items'].remove(sel);
+          					w2ui['languageNitems'].get("main").toolbar.disable("edit","delete");	
+          					transmitItemsToCompiler();
+          				});
+          			},
+          			function /*edit*/(){
+          				openDialog("UpdateItemDialog",$( document ).width()-10,$( document ).height()-10);          				
+          			}
+          		)
+			},
+         ]       
+    });
+    
+    function itemDialogTemplate (action){
+    	var html="";
+   		var change,ok;
+   		var selectField=[];
+   		if (action=="Add") {
+   			html='<tr><td style="min-width: 60px;height:30px;text-align:right">Item:</td><td style="width: 100%;"><input name="Item" type="list" style="width: 100%;"></td></tr>';
+   			selectField=[{ name: 'Item', type: 'list',options:{items: []},required:true,html:{attr:"onchange='itemSelect()' style='width: 98%;'"}}];
+
+   			change=	function(event) {
+   						event.onComplete=function () {
+   							if (event.target=="Item") itemSelect();
+   						};
+   					};
+   			ok=function(){validate(addItem);};
+       	}else ok=function(){validate(updateItem);};	
+    
+    	return {
+   			name     : action+'ItemDialog',
+   			header   : action+' Predefined Item',	
+   			formHTML : 
+				'<div class="w2ui-page page-0" style="width: 100%;">'+
+					'<table style="width: 100%;height: 100%;">'+
+						'<tr><td style="width: 100%;height: 20%">'+
+				 	  		'<table style="width: 100%;height: 100%">'+
+ 				  				'<tr><td style="width: 30%;height:100%;">'+
+				   					'<table style="width: 100%;height: 100%">'+
+				   						html+
+		   								'<tr><td style="min-width: 60px;height:30px;text-align:right">Name:</td>'+
+   											'<td style="width: 98%;"><input name="Name" type="text" style="width: 100%;"></td></tr>'+
+    					   	     		'<tr><td style="min-width: 60px;height:30px;text-align:right">Public:</td>'+
+				   		    	     		'<td><input name="Public" type="checkbox"></td>'+
+  		 				    	     	'</tr><tr><td></td><td></td></tr>'+
+     				 		 	     '</table>'+
+    				   	  		 '</td>'+
+      				 	  		 '<td style="min-width: 90px;height:100%;text-align:top">'+
+      				 	  		 	'<table style="width: 100%;height:100%;"><tr><td style="width:100%;height:25px;text-align:right;">Help text:</td></tr><tr><td></table>'+
+ 				      	  		 '</td>'+
+  				     	  		 '<td style="width: 70%;height:100%;"><table style="width: 100%;height: 100%"><tr><td>'+
+   				    	  		 	'<textarea name="Helptext" style="width: 100%;height: 100%;resize:none;"></textarea>'+
+  				     	  		 '</td></tr></table></td>'+
+ 				      	  	'</tr>'+
+ 				        '</table>'+
+  				   '</td></tr>'+
+				     '<tr><td style="width: 100%;height: 80%">'+
+ 				     	'<div style="width: 100%;height: 100%;resize:none;"><div id="itemEdit"></div></div>'+          		 
+				     '</table>'+
+				'</div>'+
+				'<div class="w2ui-buttons style="width: 100%;">'+
+					'<button class="btn" name="cancel">cancel</button>'+
+   				 	'<button class="btn" name="ok">ok</button>'+
+				 '</div>',
+   			fields : selectField.concat([
+   				{ name: 'Name', type: 'text',required:true},
+     			{ name: 'Helptext', type: 'textarea',required:true},
+     			{ name: 'Public', type: 'checkbox',required:true},
+
+   			]),
+   			actions : {
+   				cancel:function () {
+   					closeDialog();	
+   				},
+   			
+   				ok: ok
+   			},
+   		
+   			onRender: function (event) {
+   				event.onComplete=function(){
+   					$("#itemEdit").html(editors["item"]);	
+   					sendCommand("get","item",{"id":getSelection("items")}, function(data){
+   						w2ui["UpdateItemDialog"].record.Name=data.name;
+   						w2ui["UpdateItemDialog"].record.Helptext=data.help;
+   						w2ui["UpdateItemDialog"].record.Public=(data.public==1);
+   						console.log(data.code);
+   						code=data.code;
+   					});
+   				}
+   				
+   			},
+   		
+   			onChange : change 
+   							
+   		};
+   	}
+   	
+   	$().w2form(itemDialogTemplate("Add"));
+   	$().w2form(itemDialogTemplate("Update"));
+   	 
+    $().w2form ({
+    	name : 'language',
+		    	formHTML:languageFormTemplate(),
+    	fields : [
+    		{ name: 'if', type: 'checkbox'},
+    		{ name: 'switch', type: 'checkbox'},
+    		{ name: 'do', type: 'checkbox'},
+    		{ name: 'while', type: 'checkbox'},
+			{ name: 'for', type: 'checkbox'},
+			{ name: 'function', type: 'checkbox'},
+			{ name: 'javascript', type: 'checkbox'},
+			{ name: 'array', type: 'checkbox'},
+			{ name: 'structure', type: 'checkbox',html:{attr:""}},
+			{ name: 'object', type: 'checkbox',html:{attr:""}},
+			{ name: 'typing', type: 'radio',html:{attr:""}},
+    	],
+    	
+    	record : Features(false),
+    	
+    	onChange : function (event) {
+    		event.onComplete=function() {
+    			 if  (event.target == "typing") featureCheck();
+    			 editor.features(w2ui["language"].record);
+			   	 sendCommand("update","exercise",{"id":getSelection("exercises"),"features":JSON.stringify(w2ui["language"].record)},function (data) {
+       					//exerciseInfo.features=w2ui['language'].record;
+       			});
+       		}
+    	},	
+    	
+    	onRefresh : function(event) {
+    		event.onComplete=function(){
+    			var disable=w2ui["language"].record.typing=="0"
+
+    			$("#array").attr("disabled",disable);
+    			$("#structure").attr("disabled",disable);
+    			$("#object").attr("disabled",disable);
+    		}
+    	}	
+   	
+    });
+    
+    
+    $().w2sidebar({
+    	 name: 'items',
+    	 onClick:function(){
+    	 	w2ui["languageNitems"].get("main").toolbar.enable('edit','delete');
+    	 }
+    });
+    
+    // Students 
+	students=new userFormTemplate("Student","students","main","main",getEmittedExercise);    
+    // Students
+    $().w2layout({
+   		name: 'students',
+    	panels: [
+            {	type: 'main', style: pstyle, content:'Students',toolbar : students.toolbarTemplate()},
+         ]       
+   	});
+   	refillSidebar('studentList',studentList);
+   	
+    // Embedding Layouts
+    w2ui['layout'].content('main', w2ui['edit']);
+    
+    // Edit Mode
+    w2ui['edit'].content('left', w2ui['exerciseEdit']);
+    w2ui['edit'].content('main',"");
+    w2ui['edit'].content('right', "");
+    w2ui['editInput'].content('top',w2ui['editForm']);
+    w2ui['editInput'].content('main',$("#instructionEditor").html());
+
+
+   
+   	// Review Mode
+    w2ui['review'].content('main', w2ui['reviewInput']);
+    w2ui['reviewInput'].content('top',w2ui['reviewForm']);
+    w2ui['reviewInput'].content('main', $("#instructionEditor").html());
+    w2ui['reviewInput'].content('bottom',"");
+    w2ui['review'].content('left', w2ui['exerciseReview']);
+    w2ui['review'].content('right', w2ui['students']);
+    w2ui["students"].get("main").toolbar.disable("edit","delete"); 	
+
+
+    // Exercise List
+    w2ui['exerciseEdit'].content('main', w2ui['exercises']);
+    w2ui["exerciseEdit"].get("main").toolbar.disable('delete');
+    w2ui['exerciseReview'].content('main', w2ui['exercises']);
+    
+    // Get available Exercises
+	sendCommand("list","exercise",{"course":courseId},function (data) {
+		 refillSidebar('exercises',data);
+	});
+    
+    // Student List
+    w2ui['students'].content('main', w2ui['studentList']);
+ 
+ 	 // Language, Predefined items
+ 	w2ui['languageNitems'].content('top', 	 w2ui['language']);
+    w2ui['languageNitems'].content('main', 	 w2ui['items']);
+ //   w2ui['languageNitems'].content('bottom', w2ui['items']);
+
+    
+    $("#codeInput").html($("#editor").html());
+    $("#codeReview").html($("#editor").html());
+     
+    
+});
+
+function itemSelect() {
+	var dialog=w2ui["AddItemDialog"];
+	console.log(dialog);
+	if (dialog.record.Item.id==-1) {
+		dialog.clear();
+		itemEditor.set("");
+		dialog.record.Item={id:-1,text:"New"};
+		dialog.refresh();
+	} else {
+		sendCommand("get","item",{"id":dialog.record.Item.id,"course":courseId,"exercise":getSelection("exercises")},function (data) {
+			
+			dialog.record.Name=data.name;					
+			dialog.record.Helptext=data.help;
+			dialog.record.Public=data.public!=0;
+			dialog.record.course=data.course;
+			dialog.action["new"]= function() {
+				validate(addItem);
+			}
+			dialog.action["update"]= function() {   					
+				validate(updateItem);						
+   			};
+			dialog.action.ok=undefined;
+			itemEditor.set(data.code);
+			dialog.refresh();
+		});
+	}
+}
+
+function getEmittedExercise() {
+	if (getSelection("studentList")) {
+		sendCommand("get","submission",{"exercise":getSelection("exercises"),"user":getSelection("studentList")}, function (data) {
+			if (data.emitted) {
+				editorContent=data.code;
+				editorDisabled=true;
+				w2ui['reviewInput'].content('main',editors[mode]);	
+				w2ui['reviewInput'].content('bottom',w2ui['ratingForm']);					
+				sendCommand("get","rating",{"exercise":getSelection("exercises"),"user":getSelection("studentList")}, function (data) {
+					console.log(data);
+					if (data.rated) {
+						w2ui['ratingForm'].record.feedback=data.feedback;
+						w2ui['ratingForm'].record.grade=data.grade;
+						lockRated(data.time);
+					} 
+				});
+			} else {
+				w2ui['reviewInput'].content('main', "Nothing to review.");
+				w2ui['reviewInput'].content('bottom',"");
+			} 
+		});
+	} else w2ui['reviewInput'].content('main', "Select a student to review his/her exercise!");
+}
+
+// Helpers for item Dialog, 
+function addItemToExercise(declId,exerciseId) {
+	sendCommand("add","itemInExercise",{"exercise":exerciseId,"item":declId}, function (data){});
+}
+
+var bool2Int={
+	true:1,
+	false:0
+}
+
+function updateItem(head,code) {
+	var record=w2ui["UpdateItemDialog"].record;
+	if (record.Name==undefined) record.Name="Unknown";
+ 	sendCommand("update","item",{"id":getSelection("items"),"name":record.Name,"public":bool2Int[record.Public],"course":courseId,"code":itemEditor.get(),"help":record.Helptext},function (data) {
+       	w2ui["items"].add({"id":data.id,"text":record.Name});
+       	w2ui["items"].set(data.id,{"text":record.Name});
+       	closeDialog();	
+       	transmitItemsToCompiler();
+    });
+   	
+ }
+ 
+ function addItem(response) {
+ 	var record=w2ui["AddItemDialog"].record;
+ 	if (record.Name==undefined) record.Name="Unknown";
+ 	if ((record.Item.id==-1) || (record.Public && record.course!=courseId)) { 
+ 		var command="add";
+ 		record.Item.id=-1;
+ 		record.Public=record.Public&&record.course==courseId;
+ 	}
+ 	else command="update";
+ 	sendCommand(command,"item",{"id":record.Item.id,"name":record.Name,"public":bool2Int[record.Public],"course":courseId,"code":itemEditor.get(),"help":record.Helptext},function (data) {
+   		w2ui["items"].add({"id":data.id,"text":record.Name});
+    	addItemToExercise(data.id,getSelection("exercises"));
+    	closeDialog();	
+    	transmitItemsToCompiler();
+   	});
+ }
+ 
+ // Set's the input Mode
+ function setMode(m) {
+ 	mode=m;
+ 	
+ 	if (m=="instruction") var unset="program";
+ 	else var unset="instruction";
+ 	
+ 	w2ui["languageNitems"].get("top").toolbar.check(m);
+	w2ui["languageNitems"].get("top").toolbar.uncheck(unset);
+	w2ui['editInput'].content('main',editors[m]);
+ }
+
+ function featureCheck(){
+	if (w2ui["language"].record.typing=="0") {
+   		w2ui["language"].record.array=false;
+    	w2ui["language"].record.structure=false;
+    	w2ui["language"].record.object=false;
+    	w2ui["language"].refresh();
+    } else { 
+    	$("#array").attr("disabled",false);
+    	$("#structure").attr("disabled",false);
+    	$("#object").attr("disabled",false);
+    	
+    }
+}   		
+
+function transmitItemsToCompiler() {
+	sendCommand("get","predefindedItems",{"exercise":getSelection('exercises')},function (data) {
+		editor.setLibrary(data);		
+	});
+}
+   
+function fullScreen(){
+	w2ui["layout"].toggle('bottom');
+	w2ui["edit"].toggle('left');
+	w2ui["review"].toggle('left');
+	w2ui["edit"].toggle('right');
+	w2ui["review"].toggle('right');
+}   
+function getFeatures(){
+	return w2ui["language"].record;
+}
+
+function lockRated (date) {
+ 	w2ui['reviewInput'].lock('bottom',{msg     : 'Rated '+date,spinner : false,opacity : 0.5});
+ }
+
+window.scrollTo(0, 0); 
+</script>
+
+</body>
+</html>

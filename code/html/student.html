@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html style="width: 100%; min-height: 100%; height: 100%;overflow:hidden;" manifest="code/cache.mf">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.css" />
+    <script src="code/javascript/third-party/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.js"></script>
+    <script type="text/javascript" src="code/javascript/templates.js"></script>
+    <script type="text/javascript" src="code/javascript/ui.js"></script>
+    <script type="text/javascript" src="code/javascript/mode.js"></script>
+</head>
+
+<body style="margin: 0px 0 0 0; padding: 0px; width: 100%; min-height: 100%; height: 100%;overflow:hidden;">
+
+<div id="layout" style="width: 100%; min-height: 100%; min-height:100%; height: 100%;"></div>
+
+<script type="text/javascript">
+var exerciseInfo;
+var editor=undefined;
+var students;
+var features;
+/*
+ * User Interface
+ */
+$(function () {
+    var pstyle = 'border: 0px solid #dfdfdf; padding: 5px;';    
+ 
+    // Main Layout with Top Control Panel
+    $('#layout').w2layout({
+        name: 'layout',
+        panels: [
+            { type: 'top', size: 80, style: pstyle,resizeable:true,
+              toolbar: {items : [
+    						{ 	type	: 	'html',  
+        			  		  	id		: 	'studentMode',
+								html	: 	'<div style="padding: 3px 10px;">'+
+											'<b>'+courseName+' - '+
+				  							'Student : </b>'+
+				  							userName+
+											'</div>' 
+				  			},
+				 							  					
+				  			{	type	: 	'spacer'},	
+				  			{	type	:	'break',	},
+				  			
+				  			{	type	:   'button', id : 'logoutButton', caption : 'Logout',
+				  				onClick : function () {
+				  					window.location=window.location;
+				  				}
+				  			}
+    					]},
+    			content:'<textarea id="courseDescription" style="width: 100%; min-height: 100%; height: 100%;resize:none;" disabled>'+courseDescription+'</textarea>'
+    		},
+    		{ type: 'left', size: 250, style: pstyle, toolbar: toolbarTemplate("Exercise"),content: 'exercises' },
+    		{ type: 'main', style: pstyle, content:""},
+    		{ type: 'right', size: 250,style: pstyle, content:''},
+    		{ type: 'bottom', size: 50, style: pstyle, content:"<small><div id='communicationError'></div></small>"}
+
+        ]
+    });
+    
+    // Language Features & Functions
+    $().w2layout({
+   		name: 'languageNitems',
+    	panels: [
+            { 	type: 'main', style: pstyle,
+            	toolbar : toolbarTemplate("Language")
+			},
+            {	type: 'bottom', style: pstyle, content:'',
+            	toolbar: toolbarTemplate("Predefined Items")
+			},
+         ]       
+    });
+    
+    $().w2form({
+   		name: 'ratingForm',
+    	formHTML:   '<table border=0 style="width: 100%;height: 100%;text-align:right;"><tr><td align="right" style="width:100%;">'+
+      				'<table border=0 style="width: 100%;height: 100%;text-align:right;"><tr>'+
+					'<td style="width: 40px;height: 100%;">Feedback:</td><td><textarea name="feedback" disabled style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table></td><td style="width: 100%;height: 100%;">'+
+					'<table border=0 style="width: 20px;height: 100%;">'+
+    				'<tr><td style="width: 40px;height: 100%;">Grade:</td><td><input name="grade" disabled type="text" size="1" ></input></td></tr>'+
+      				'</table></td></tr></table>',
+    	fields : [
+    		{ name: 'feedback', type: 'textarea'},
+    		{ name: 'grade', type: 'text'},
+    	],  
+    	actions : {
+   				rate:function () {
+   					sendCommand("rate","exercise",{"exercise":getSelection("exercises"),"user":getSelection("studentList"),"feeback":w2ui['ratingForm'].record.feedback,"grade":Number(w2ui['ratingForm'].record.grade)},function (data) {
+       					lockRated(data.time);
+       				});
+   				},
+   			}, 
+   		record : {
+   			feedback:"",
+   			grade:3
+   		}
+   	});
+    
+    
+    $().w2form({
+    	name: 'exerciseDescription',
+    	formHTML:   
+    				'<table border=0 style="width: 100%;height: 100%;" ><tr style="height:40px;">'+
+    				'<td align="right" style="width:400px;"></td>'+
+    				'<td style="width: 100%;"><div class="w2ui-field w2ui-span4"><input name="exerciseName" disabled type="text" style="width: 100%;"></div></td>'+
+    				'</tr><tr style="height:40px;">'+
+            		'<td align="right"></td>'+
+					'<td style="width: 100%;height: 100%;"><textarea name="exerciseDescription" disabled style="width: 100%;height: 100%;resize:none;"></textarea></td>'+
+					'</tr></table>',
+    	fields : [
+    		{ name: 'exerciseName', type: 'text',html:{}},
+    		{ name: 'exerciseDescription', type: 'textarea',html:{}}
+    	],   
+   	});
+   	
+    $().w2field({name:'exerciseName',box:$('#exerciseName')});
+    
+     // Input Screen
+    $().w2layout({
+        name: 'input',
+        panels: [
+            { type: 'top', size: 120, resizable: true, style: pstyle, content: '<textarea id="exerciseDescription" disabled style="width: 100%; min-height: 100%; height: 100%;resize:none;"></textarea>'},
+            { type: 'main', style: pstyle, content:'input' },
+            { type: 'bottom', size: 80, style:pstyle, content: 'control'}
+        ]
+    });
+    
+    $('').w2form({ 
+        name   : 'control',
+        formHTML:    
+								
+									
+										'<center>'+
+											'<input type="button" name="Reset" id="Reset" value="Reset" color="red">'+
+											'&nbsp; &nbsp; &nbsp; &nbsp;'+
+											'<input type="button" name="Emit" id="Emit" value="Emit">'+
+										'</center>',
+								
+		        	
+
+        actions: {
+            'Reset': function (event) {
+                console.log('reset', event);
+                editor.reset();
+            },
+            'Emit': function (event) {
+            	console.log(editor.handIn());
+            	sendCommand("submit","code",{"code":editor.handIn(),"exercise":getSelection("exercises"),"user":userId}, function(data) {
+            		lockEmitted (data.time);
+    	 		});
+            },
+        }
+    });
+
+
+    
+    $().w2sidebar({
+    	 name: 'exercises',
+    	 onClick: function(target,event) {
+    	 	
+		     // Load content of next exercise
+    	 	 sendCommand("get","exercise",{"id":Number(target),"user":userId},function (data) {
+				 
+			    features=data.features;
+ 
+				w2ui['input'].content('main',editors[data.mode]);
+ 					
+				refillSidebar('items',data.items);	
+				w2ui['exerciseDescription'].record.exerciseName=data.name;					
+				w2ui['exerciseDescription'].record.exerciseDescription=data.description;	
+				  	 	
+				w2ui['layout'].content('main', w2ui['input']);
+				
+				var languageFeatures=[{"id":"typing"+data.features.typing,"text":typing[data.features.typing]}];
+				
+				var elem;
+				for (elem in data.features) {
+					if (elem!="typing") {
+						if (data.features[elem])  languageFeatures.push({"id":elem,"text":elem});	
+					}
+				}
+				
+				refillSidebar('language',languageFeatures);
+				//w2ui['languageNitems'].content('main', w2ui['items']);	
+				
+				if (data.emitted)	{
+					if (data.rated) {
+						w2ui['input'].content('bottom',w2ui['ratingForm']);
+						w2ui['ratingForm'].record.feedback=data.feedback;
+						w2ui['ratingForm'].record.grade=data.grade;
+						w2ui['input'].lock('bottom',{spinner : false,opacity : 0});
+					} else lockEmitted (data.time);
+				}
+				else w2ui['input'].content('bottom',w2ui['control']);
+			});
+		}	
+    });
+    
+
+   	 
+   
+    
+    
+    $().w2sidebar({
+    	 name: 'items',
+    	 onClick: function(event){
+    	 		event.onComplete=function(){
+    	 			if (w2ui[getSelection("items")+"HelpDialog"]==undefined) {
+    	 				sendCommand("get","item",{"id":getSelection("items")}, function(data) {
+    	 					$().w2form(helpTemplate(getSelection("items"),data.name));
+    	 					w2ui[getSelection("items")+"HelpDialog"].record.help=data.help;
+							openDialog(getSelection("items")+"HelpDialog")
+    	 				});
+    	 			} else	openDialog(getSelection("items")+"HelpDialog"); 	
+    	 		}
+    	 }
+    });
+    
+    $().w2sidebar({
+    	 name: 'language',
+    	 onClick: function(event){
+    	 		event.onComplete=function(){		
+    	 			if (w2ui[event.node.id+"HelpDialog"]==undefined) {
+    	 				$().w2form(helpTemplate(event.node.id,event.node.text));
+    	 				loadHelp(event.node.id);
+						openDialog(event.node.id+"HelpDialog")
+    	 			} else	openDialog(event.node.id+"HelpDialog"); 	
+    	 		}
+    	 }
+    });
+    
+
+   	
+    // Embedding Layouts
+    w2ui['layout'].content('main', w2ui['edit']);
+    w2ui['layout'].content('left', w2ui['exercises']);
+    w2ui['layout'].content('right',w2ui['languageNitems']);
+
+	w2ui['input'].content('top',w2ui['exerciseDescription']);
+
+	w2ui['input'].content('bottom',w2ui['control']);
+
+	// Language, Predefined items
+ 	w2ui['languageNitems'].content('main', 	 w2ui['language']);
+    w2ui['languageNitems'].content('bottom', w2ui['items']);
+
+    // Get available Exercises
+	sendCommand("list","exercise",{"course":courseId},function (data) {
+		 refillSidebar('exercises',data);
+	});
+    
+    
+    $("#codeInput").html($("#editor").html());
+    $("#codeReview").html($("#editor").html());
+         
+});
+
+   
+function getFeatures(){
+	return features;
+}
+
+ function lockEmitted (date) {
+ 	w2ui['layout'].lock('main',{msg     : 'Emitted '+date,spinner : false,opacity : 0.5});
+ }
+
+
+window.scrollTo(0, 0); 
+</script>
+
+</body>
+</html>

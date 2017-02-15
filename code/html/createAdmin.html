@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.css" />
+    <script src="code/javascript/third-party/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="code/javascript/third-party/w2ui-1.4.2/w2ui-1.4.2.min.js"></script>
+</head>
+<body>
+<div id="init"></div>
+</body>
+
+<script>
+$(function () {
+ 	$('#init').w2form({ 
+		name     : 'init',
+		header   : 'Administrator Settings',	
+		url      : 'server/get',
+		fields: [
+			{ name: 'user', type: 'text', required: true, html:{caption	: "Username"} },
+			{ name: 'pass', type: 'password', required: true, html:{caption	: "Password",placeholder:"password"} },
+		],
+		record : {
+			user:"admin"	
+		},
+		actions: {
+			ok: function () {
+				if (w2ui['init'].validate(true).length==0) {
+       				$.get("code/php/createAdmin.php","user="+w2ui['init'].record.user+"&pass="+w2ui['init'].record.pass,function (data) {
+	       		 		document.write(data);
+  	     		 		document.close();
+    	    		});
+    	    	}
+			},
+	
+		}
+	
+	});
+});
+
+</script>
+</html>
