@@ -1,0 +1,17 @@
+With the if statement you can execute code if an condition is true.
+
+	boolean variable condition=true;
+	
+	if (condition) {
+		// Do something
+	}
+	
+Optional you add an else statement after the if {...}. The code between {} following the else will be executed if the condition is false.
+
+	boolean variable condition=false;
+
+	if (condition) {
+		// Do something if condition==true
+	 } else {
+	 	// Do something if condition==false
+	 }

@@ -1,0 +1,22 @@
+With a for statement you can build a loop. A for statement takes 3 Arguments, seperated by ; .
+
+The first argument is an assignment, that is executed before the loop.
+
+The second argument is a condition. While the condition is true the loop will be executed.
+
+The third statement is executed at the end of the loop.
+
+	for (i=start;i<stop;i=i+1) {
+		// Do something
+	}
+	
+Any for - loop can be transformed into a while - loop. If you would use a while - loop for creating the above for - loop it would look like this:
+
+	i=start;
+	
+	while (i<stop) {
+
+		// Do something
+		
+		i=i+1;
+	}

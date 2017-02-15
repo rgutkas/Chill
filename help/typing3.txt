@@ -1,0 +1,14 @@
+You can store values in variables. A Variable can hold values of one specific type.Before you can use a variable you have to declare it.
+
+	integer variable v;
+	integer variable i=0;
+	
+	number variable n=0.1;
+	number constant pi=3.14;
+	
+	character variable c='s';
+	
+	string variable s="text";
+	
+	boolean constant f=false;
+	boolean variable t=true;

@@ -1,0 +1,27 @@
+You can store values in variables. A Variable can hold values.You can choose between two variants to tell Chill that you use a variable.
+If you assign a value to a variable, you can use it. This variable can hold any type.
+
+	a		=> Error
+	a=0		=> ok
+	a		=> 0
+	a="text"	=> ok
+	a		=> text
+
+Or you can declare a variable. After you assign a value to it you can use it.
+
+	variable x	=> ok
+	x=0		=> ok
+	x		=> 0
+
+This way you can give a variable a specific type, which means it only can hold one special type of value.
+
+	integer variable i=0;
+	number variable n=0.1;
+	character variable c='s';
+	string variable s="text;
+	boolean variable b=true;
+
+You can even declare it as constant, which is a variable that you only can assign a value once.
+
+	constant t=true;
+	boolean constant f=false;

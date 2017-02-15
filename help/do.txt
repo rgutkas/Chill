@@ -1,0 +1,7 @@
+With the do statement you can build a loop. The code between {} will be executed while the condition specified after the while is true. A do - loop is executed at least once.
+
+	do {
+	
+		// Do something
+
+	} while (condition==true);

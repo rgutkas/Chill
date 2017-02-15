@@ -1,0 +1,13 @@
+You can include javascript code within you're program. The javascript code is encapsulated in the chill code. The javascript keyword starts a javascript include. It is followed by the name of the variables you from chill you want to use in javascript. The code itself starts with # and ends with #end.
+
+	x=2;
+	y=4;
+
+	javascript(x,y,ret)
+	#
+		ret=Math.pow(x,y);    
+	#end
+	
+	return ret;
+	
+Variables created in javascript are not available in Chill. You cannot use Chill arrays, structures and objects in the javascript.

@@ -1,0 +1,36 @@
+Array's in Chill are custom types. Before you can use an array you have to declare an array type.
+
+	array arr [];
+
+Then you can declare a variable of the array type.
+
+	arr variable a;
+
+Array variables in Chill are variables that can store more than one value. Each value stored in an array is indexed by a key.
+	
+	for (i=0;i<4;i=i+1) {
+		a[i]=i;
+	}
+
+	return a; 	
+	
+	=> [0,1,2,3]
+
+Each array in chill knows it current length. This can be retrived with the length attribute. We can change for instance the last line of the example above.
+
+	return a.length;
+	
+	=> 4
+	
+Array's in chill are self growing, so if you assign a value to an index that doesn't exist yet, this index will be created automatically.
+
+Depending on thy typing level you may or must specify a type in an array declaration. The type of the index is specified between []. The type of the values stored in an array are specified after contains.
+
+	array arr2 [integer] contains integer; 
+ 
+ For performing an action on every value stored in an array there is an special for - loop. The variable given after each will be assigned the current index of the array specified after in. 
+ 
+	for (each index in a) {
+	    a[index]=a[index]*2;
+	}
+

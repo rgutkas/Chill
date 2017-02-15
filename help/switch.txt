@@ -1,0 +1,10 @@
+With the switch statement you can execute some code depending on a value. You can specify options using the case statement. The last option has to be default. The code following default will be executed, if no matching option is specified for the given value.
+
+	string variable name="John";
+
+	switch(s) {
+		case "John": { ... }
+		case "Eric","George","Bob": { ... }
+		case "Susan": { ... }
+		default: { ... } 
+	}

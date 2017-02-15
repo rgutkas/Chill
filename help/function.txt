@@ -1,0 +1,26 @@
+A function is used for code you wan't to use in different places of you're program. You only have to write the code once following the function header and can reuse when it whenever you need it.
+
+	function f() {
+		// Do something
+	}
+
+To execute the code of a function you simply call it by specifying its name followed by the parameters between ().
+	
+	f();
+	
+You can hand values through parameters to a function. These parameters work like variables inside the function. And you can return values from a function with the return statement. Whenever called inside a function, the return statement will exit the function and return the value specified after it.
+
+	function add(a,b) {
+		return a+b;
+	}
+	
+	add(1,2) 	=> 3
+	
+Depending on the typing level you may not, may or must specify types of a function. A type before the function statement is the type that is returned.
+A type before a parameter specifies the type of the parameter.
+	
+	number function add(number a,number b) {
+		return a+b;
+	}
+	
+	add(8,-8)	=> 0

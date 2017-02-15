@@ -1,0 +1,23 @@
+You can store values in variables. A Variable can hold values.Before you can use a variable you have to declare it.
+
+	s=0; //Error, s is used before it's declared.
+	
+	variable s;
+	
+	s=0; //ok, s is is used after it's declared.
+	
+	constant pi=3.14;
+
+If you don't specify a type before the keyword variable or constant, the variable can hold values of any type. If you specify a specific type the variable can only hold values of this type.
+
+	integer variable v;
+	integer variable i=0;
+	
+	number variable n=0.1;
+	
+	character variable c='s';
+	
+	string variable s="text";
+	
+	boolean constant f=false;
+	boolean constant t=true;

@@ -1,0 +1,95 @@
+Objects in Chill use classes as templates for creation. A class is a custom type. A class can contain constants, variables and functions.
+
+	class c {
+		
+		variable x;
+	
+		function y(a) {
+			return x*a;
+		}
+	}
+
+In other words, objects of a class have knowledge and can do something. An object of a class is created with the new statement followed by the name of the class.
+	
+	new c();
+	
+The class name is specified like a function call, because every time an object is created a special function is called, named constructor. A constructor can be specified explicitly. It hast to be the first thing specified in the class. 	
+	
+	class c {
+		constructor (a) {
+			x=a;
+		}
+		
+		variable x;
+	
+		function y(a) {
+			return x*a;
+		}
+	}	
+	
+	new c(3);
+	
+Variables don't contain objects, they only point to it. So more than one variable can point to the same object, like in the example below.
+	
+	c variable a = new c();
+	c variable b = a;
+
+If no variable points to an object its destroyed automatically.
+
+A class can extend another class, which means that shares the same properties the base class has got. 
+
+	class cs extends c {
+	
+		/* 
+			cs inherits the constructor and properties from c
+			constructor (a) {
+				x=a;
+			}
+			 
+			variable x;
+	
+			function y(a) {
+				return x*a;
+			}
+		*/
+
+		function z(a) {
+			return x*a*2;
+		}
+	}
+	
+A variable of a baseclass can point to an object of a class that extends it, because it is guaranteed to have at least the same properties.
+
+	c  variable a = new cs(3);	// Ok
+	cs variable b = new c(3); 	// Error
+	
+
+
+If a class extends another class properties can be overwritten. So if a property with the same name exists in a class a class extends, it must identically be declared.
+
+	class c {
+		function x(a) {
+			return 2*a;
+		}
+	}
+	
+	class cs {
+		function x(a) {
+			return 5*a;
+		}
+	}
+
+There is no overloading in Chill, so if declarations of properties of a class differ, like in the following example, it will lead to an error.
+
+	class c {
+		function x(a) {
+			return 2*a;
+		}
+	}
+	
+	class cs {
+		function x(a,b) { // Error
+			return a*b;
+		}
+	}
+

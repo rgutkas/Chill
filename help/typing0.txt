@@ -1,0 +1,12 @@
+You can store values in variables. A Variable can hold values of any type.
+
+	v=0		=> ok
+	v+1		=> 1
+	v="text“	=> ok
+	v		=> text
+
+After you assign a value to a variable, you can use it.
+
+	a		=> Error
+	a=0		=> ok
+	a		=> 0

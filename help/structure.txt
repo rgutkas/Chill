@@ -1,0 +1,19 @@
+A structure is a custom type, which allows to store more than one ore more values within a variable.
+	
+	structure person {
+		variable firstname;
+    	variable lastname;
+	}
+
+	person variable p;
+
+To access the fields of an structure variable you specify the fieldname after the variable name, separated with a . .
+
+	p.firstname="John";
+	p.lastname="Doe";
+	
+	return p;
+	
+	=> {firstname:"John",lastname:"Doe"}
+	
+	
